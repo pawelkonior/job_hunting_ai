@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
-load_dotenv(dotenv_path=Path("../../envs/.env"))
+load_dotenv(dotenv_path=Path("../envs/.env"))
 
 
 class Settings(BaseSettings):
@@ -13,10 +13,14 @@ class Settings(BaseSettings):
     POSTGRES_DB: str | None = os.getenv("POSTGRES_DB")
     POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", "5432"))
     POSTGRES_HOST: str | None = os.getenv("POSTGRES_HOST")
+    POSTGRES_ASYNC_DRIVER: str = "postgresql+asyncpg://"
+    POSTGRES_SYNC_DRIVER: str = "postgresql+psycopg://"
 
     DATABASE_URL: str = (
-        f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+        f"{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
     )
 
 
 settings = Settings()
+
+

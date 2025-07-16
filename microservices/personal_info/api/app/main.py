@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 
+from .api import routers
+
 app = FastAPI(
     title="Job Hunting AI",
     version="1.0.0",
 )
+
+for router in routers:
+    app.include_router(router)
 
 
 @app.get("/health")
