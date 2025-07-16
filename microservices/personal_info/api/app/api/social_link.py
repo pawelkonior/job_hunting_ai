@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends
+from sqlalchemy import select
+
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.app.core.database import get_db
 from api.app.models.social_link import SocialLink
-from api.app.schemas.social_link import SocialLinkOut, SocialLinkCreate
+from api.app.schemas.social_link import SocialLinkOut, SocialLinkCreate, SocialLinkUpdate, SocialLinkUpdatePartially
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/social-links", tags=["Social Links"])
 
@@ -27,3 +30,65 @@ async def add_social_links(
         await db.refresh(item)
 
     return created
+
+
+@router.get("/", response_model=list[SocialLinkOut])
+async def get_social_links(
+        db: AsyncSession = Depends(get_db),
+) -> list[SocialLinkOut]:
+    stmt = select(SocialLink).where(SocialLink.user_id == 1)
+    results = await db.execute(stmt)
+    return results.scalars().all()
+
+
+@router.get("/{id}/", response_model=SocialLinkOut)
+async def get_social_link(
+        id: int,
+        db: AsyncSession = Depends(get_db),
+) -> SocialLinkOut:
+    stmt = select(SocialLink).where(SocialLink.user_id == 1, SocialLink.id == id)
+    result = await db.execute(stmt)
+    link = result.scalar_one_or_none()
+
+    if link is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Social Link not found.")
+
+    return link
+
+
+@router.patch("/{id}/", response_model=SocialLinkOut)
+async def update_partially_social_link(
+        id: int,
+        update_data: SocialLinkUpdate,
+        db: AsyncSession = Depends(get_db),
+) -> SocialLinkOut:
+    stmt = select(SocialLink).where(SocialLink.id == id, SocialLink.user_id == 1)
+    result = await db.execute(stmt)
+    link = result.scalar_one_or_none()
+
+    if link is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Social Link not found.")
+
+    for field, value in update_data.model_dump(exclude_unset=True).items():
+        setattr(link, field, value)
+
+    await db.commit()
+    await db.refresh(link)
+
+    return link
+
+
+@router.delete("/{id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_social_link(
+        id: int,
+        db: AsyncSession = Depends(get_db),
+) -> None:
+    stmt = select(SocialLink).where(SocialLink.id == id, SocialLink.user_id == 1)
+    result = await db.execute(stmt)
+    link = result.scalar_one_or_none()
+
+    if link is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Social Link not found.")
+
+    await db.delete(link)
+    await db.commit()

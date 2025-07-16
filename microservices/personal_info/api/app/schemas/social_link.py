@@ -10,8 +10,22 @@ class SocialLinkCreate(BaseModel):
         return str(url)
 
 
+class SocialLinkUpdate(SocialLinkCreate):
+    pass
+
+
+class SocialLinkUpdatePartially(BaseModel):
+    platform: str | None = None
+    url: HttpUrl | None = None
+
+    @field_serializer("url")
+    def serialize_url(self, url: HttpUrl) -> str:
+        return str(url)
+
+
 class SocialLinkOut(SocialLinkCreate):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

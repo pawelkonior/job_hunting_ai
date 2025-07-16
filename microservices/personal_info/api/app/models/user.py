@@ -11,4 +11,5 @@ class User(Base):
     name: Mapped[String] = mapped_column(String, nullable=False)
     email: Mapped[String] = mapped_column(String, nullable=False, unique=True)
 
+
     social_links: Mapped[list["SocialLink"]] = relationship(back_populates="user", cascade="all, delete-orphan")
